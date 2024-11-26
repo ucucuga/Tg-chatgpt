@@ -1,0 +1,107 @@
+@router.message(F.photo)
+async def get_photo(message: Message):
+    await message.bot.send_chat_action(chat_id=message.from_user.id,
+                                       action=ChatAction.TYPING)
+    await asyncio.sleep(0.5)    
+    await message.answer('Не розуміючи. Я люблю букви. Надішли свій запит текстом')
+
+
+@router.message(F.document)
+async def get_photo(message: Message):
+    await message.bot.send_chat_action(chat_id=message.from_user.id,
+                                       action=ChatAction.TYPING)
+    await asyncio.sleep(0.5)    
+    await message.answer('Не розуміючи. Я люблю букви. Надішли свій запит текстом')
+
+
+# checking function
+async def slang_check(req, model="gpt-3.5-turbo"):
+    slang = f"Is the word '{req}' considered slang? Respond with 'Yes' or 'No'."
+    response = await gpt_text(slang, model)
+    if 'yes' in response['response'].lower():
+        return True
+    else:
+        return False
+
+# returning function
+async def handle_user_input(req):
+    if await slang_check(req):
+        response  = await gpt_text(f"Explain the slang term '{req}'.", "gpt-3.5-turbo")
+        return response['response']
+    else:
+        return "The word is not considered slang."
+
+
+async def gpt_text(req, model):
+    completion = await client.chat.completions.create(
+        messages=[{"role": "user", "content": req}],
+        model=model
+        )
+    return {'response':completion.choices[0].message.content}
+async def gpt_image(req, model):
+    response = await client.images.generate(
+        model = "dall-e-3",
+        prompt = req, 
+        size = "1024x1024",
+        quality = "standart",
+        n=1,
+        )
+    return {'response': response.data[0].url}
+
+async def encode_image(image_path):
+    async with aiofiles.open(image_path, "rb") as image_file:
+        return base64.b64encode(await image_file.read()).decode('utf-8')
+
+
+async def gpt_vision(req, model, file):
+    base64_image = await encode_image(file)
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {os.getenv('AITOKEN')}"
+    }
+
+    payload = {
+        "model": model,
+        "messages":[
+            {
+            "role": "user",
+            "content": [
+                {
+                "type": "image_url",
+                "image_url": {
+                    "url":f"data: image/jpeg;base64,{base64_image}"
+                }
+                }
+            ]
+            }
+        ],
+    "max_tokens": 300
+    }
+    if req is not None:
+        payload["messages"][0]['content'].append({
+                "type": "text",
+                "text": req
+                })
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload) as response:
+            completion = await response.json()
+    return {'response':completion['choices'][0]['message']['content']}
+
+async def gpt_text(req, model):
+    check = f"Is the word '{req}' a slang term? Answer with 'yes' or 'no' without any further explanation."
+    response = await client.chat.completions.create(
+        messages=[{"role": "user", "content": check}],
+        model=model
+    )  
+    check_result = response.choices[0].message.content.strip().lower()
+    if 'yes' in check_result:
+        explanation = f"Explain the slang term '{req}'."
+        explanation_response = await client.chat.completions.create(
+            messages=[{"role": "user", "content": explanation}],
+            model=model
+        )
+        return {'response': explanation_response.choices[0].message.content.strip()}
+    else:
+        return {'response': f"The word '{req}' is not recognized as slang."}
