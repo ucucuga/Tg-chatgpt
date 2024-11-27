@@ -1,6 +1,6 @@
 # Tg-chatgpt  
 
-**Tg-chatgpt** is an open-source project designed to integrate OpenAI's ChatGPT with Telegram, enabling users to interact with the powerful AI chatbot directly within the Telegram messaging app. This bot acts as a bridge between the Telegram user interface and OpenAI's API, offering an intuitive and conversational AI experience.  
+**Tg-chatgpt** is an open-source project designed to integrate OpenAI's ChatGPT with Telegram, enabling users to interact with the powerful AI chatbot directly within the Telegram messaging app. This bot acts as a bridge between the Telegram user interface and OpenAI's API, offering an intuitive and conversational AI experience.  AAAAAAAA SISKI PISKI
 
 ## Features  
 - **Slang Identification:**  
